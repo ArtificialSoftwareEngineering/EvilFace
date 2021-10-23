@@ -1,17 +1,11 @@
 #! /bin/sh
 
-TAG=template
+DATA=$1
+PORT=$2
+TAG=icodegen
 
-if [ $# -eq 1 ]; then
-	if [ "$1" = "--build" ]; then
-		# Build the docker container
-		docker build -t $TAG .
-	fi
-fi
-
-
-# Run the docker container. Add additional -v if
-# you need to mount more volumes into the container
-# Also, make sure to edit the ports to fix your needs.
-docker run -d --runtime=nvidia -v $(pwd):/tf/main \
-	-p 0.0.0.0:6008:6006 -p 8002:8888  $TAG
+docker run --gpus all -d -p $PORT:8888 --user root \
+	-e NB_GROUP=grad -e NB_UID=$(id -u) -e NB_GID=$(id -g) \
+	-e JUPYTER_ENABLE_LAB=yes -v "$PWD":/home/jovyan/work \
+	-v "$DATA":/home/jovyan/data --name $(whoami)-$TAG \
+	semerulab/datascience:dev-cuda110
